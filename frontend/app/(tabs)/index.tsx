@@ -1,98 +1,152 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import {
+  FlatList,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { styles } from "@/styles/feed.style";
 
-export default function HomeScreen() {
+type Post = {
+  id: string;
+  community: string;
+  author: string;
+  time: string;
+  title: string;
+  body?: string;
+  votes: string;
+  comments: string;
+  shares: string;
+  isPromoted?: boolean;
+  hasImage?: boolean;
+};
+
+const FEED: Post[] = [
+  {
+    id: "1",
+    community: "r/DeveloperJobs",
+    author: "u/frontend_guy",
+    time: "11h",
+    title: "Hi, I'm a software developer",
+    body: "Ask me anything about getting started with React Native and Expo.",
+    votes: "435",
+    comments: "93",
+    shares: "12",
+  },
+  {
+    id: "2",
+    community: "u/SpaXialAI • Promoted",
+    author: "u/SpaXialAI",
+    time: "Sponsored",
+    title: "Stop grinding. Create more. AI that gets gameplay.",
+    body: "",
+    votes: "1.2k",
+    comments: "210",
+    shares: "58",
+    isPromoted: true,
+    hasImage: true,
+  },
+  {
+    id: "3",
+    community: "r/DeveloperJobs",
+    author: "u/hiring_now",
+    time: "10h",
+    title: "[HIRING] Junior Developer – (Remote) – English Required",
+    body: "1–2 years of experience • React / Node • Good communication • Available full‑time.",
+    votes: "4.0k",
+    comments: "320",
+    shares: "94",
+  },
+  {
+    id: "4",
+    community: "r/TwenteisIndia",
+    author: "u/daemon5921",
+    time: "20h",
+    title: "Girls' Ovulation is Crazyyy",
+    body: "So so so yesterday night randomly I met a girl on Discord...",
+    votes: "1.0k",
+    comments: "290",
+    shares: "73",
+  },
+];
+
+function PostCard({ item }: { item: Post }) {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.communityAvatar}>
+          <Text style={styles.communityLetter}>
+            {item.community.charAt(2)?.toUpperCase() ?? "t"}
+          </Text>
+        </View>
+        <View style={styles.communityRow}>
+          <Text style={styles.communityName}>{item.community}</Text>
+          <Text style={styles.metaDot}>•</Text>
+          <Text style={styles.metaText}>{item.author}</Text>
+          <Text style={styles.metaDot}>•</Text>
+          <Text style={styles.metaText}>{item.time}</Text>
+        </View>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Text style={styles.title}>{item.title}</Text>
+      {item.body ? <Text style={styles.bodyText}>{item.body}</Text> : null}
+      {item.hasImage ? <View style={styles.image} /> : null}
+
+      <View style={styles.actionsRow}>
+        <View style={styles.votesRow}>
+          <TouchableOpacity style={styles.pillButton} activeOpacity={0.8}>
+            <Ionicons name="arrow-up" size={16} color="#4B5563" />
+            <Text style={styles.countText}>{item.votes}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.pillButton} activeOpacity={0.8}>
+            <Ionicons name="chatbubble-outline" size={16} color="#4B5563" />
+            <Text style={styles.pillText}>{item.comments} comments</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.pillButton} activeOpacity={0.8}>
+          <Ionicons name="arrow-redo-outline" size={16} color="#4B5563" />
+          <Text style={styles.pillText}>{item.shares} shares</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default function HomeScreen() {
+  return (
+    <SafeAreaView style={styles.screen} edges={["top"]}>
+      <StatusBar barStyle="dark-content" />
+
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.appName}>tidder</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+            <Ionicons name="add-circle-outline" size={20} color="#4B5563" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+            <Ionicons name="notifications-outline" size={20} color="#4B5563" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.searchBar} activeOpacity={0.9}>
+        <Ionicons name="search-outline" size={18} color="#9CA3AF" />
+        <Text style={styles.searchPlaceholder}>Search Tidder</Text>
+      </TouchableOpacity>
+
+      <FlatList
+        data={FEED}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <PostCard item={item} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.feedList}
+      />
+    </SafeAreaView>
+  );
+}
