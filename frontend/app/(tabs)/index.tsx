@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
+  RefreshControl,
   StatusBar,
   Text,
   TouchableOpacity,
@@ -9,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useApi } from "@/lib/api";
 import { styles } from "@/styles/feed.style";
 
 type Post = {
@@ -25,7 +28,7 @@ type Post = {
   hasImage?: boolean;
 };
 
-const FEED: Post[] = [
+const FEED_FALLBACK: Post[] = [
   {
     id: "1",
     community: "r/DeveloperJobs",
@@ -74,6 +77,14 @@ const FEED: Post[] = [
   },
 ];
 
+function formatTime(createdAt: string) {
+  const d = new Date(createdAt);
+  const h = Math.floor((Date.now() - d.getTime()) / 3600000);
+  if (h < 1) return "now";
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
 function PostCard({ item }: { item: Post }) {
   return (
     <View style={styles.card}>
@@ -117,6 +128,46 @@ function PostCard({ item }: { item: Post }) {
 }
 
 export default function HomeScreen() {
+  const api = useApi();
+  const [posts, setPosts] = useState<Post[]>(FEED_FALLBACK);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      await api.syncUser();
+      const data = await api.getPosts();
+      setPosts(
+        data.map((p: any) => ({
+          id: p.id,
+          community: `r/${p.community}`,
+          author: p.author,
+          time: formatTime(p.createdAt),
+          title: p.title,
+          body: p.body,
+          votes: p.votes,
+          comments: p.comments,
+          shares: "0",
+        }))
+      );
+    } catch {
+      // Keep fallback data on error
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    load();
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <StatusBar barStyle="dark-content" />
@@ -140,13 +191,22 @@ export default function HomeScreen() {
         <Text style={styles.searchPlaceholder}>Search Tidder</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={FEED}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PostCard item={item} />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.feedList}
-      />
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#4C54D2" />
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <PostCard item={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.feedList}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

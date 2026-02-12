@@ -1,12 +1,20 @@
 {
   "name": "database",
-  "module": "index.ts",
+  "main": "src/index.ts",
   "type": "module",
   "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy"
   },
-  "peerDependencies": {
+  "dependencies": {
+    "@prisma/client": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "dotenv": "^16.4.5",
+    "prisma": "^6.0.0",
     "typescript": "^5"
   }
 }

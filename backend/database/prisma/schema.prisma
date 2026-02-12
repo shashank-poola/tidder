@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users synced from Clerk
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  username  String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  posts    Post[]
+  votes    Vote[]
+  comments Comment[]
+  pollVotes PollVote[]
+}
+
+// Subreddit-style communities
+model Community {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "DeveloperJobs"
+  slug        String   @unique // e.g. "developerjobs"
+  description String?
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+}
+
+// Posts or polls
+model Post {
+  id           String   @id @default(cuid())
+  title        String
+  body         String?
+  communityId  String
+  authorId     String
+  isPoll       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes       Vote[]
+  comments    Comment[]
+  pollOptions PollOption[]
+
+  @@index([communityId])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+}
+
+// Poll options (only when post.isPoll)
+model PollOption {
+  id        String   @id @default(cuid())
+  postId    String
+  label     String
+  voteCount Int      @default(0)
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  pollVotes PollVote[]
+
+  @@index([postId])
+}
+
+// Post upvote/downvote
+model Vote {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  value     Int      // 1 or -1
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+}
+
+// Poll option vote
+model PollVote {
+  id        String   @id @default(cuid())
+  optionId  String
+  userId    String
+
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, userId])
+  @@index([optionId])
+}
+
+// Comments on posts
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
