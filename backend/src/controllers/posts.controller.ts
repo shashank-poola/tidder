@@ -43,6 +43,8 @@ export async function listPosts(req: Request, res: Response) {
       comments: String(p._count.comments),
       createdAt: p.createdAt,
       isPoll: p.isPoll,
+      mediaUrl: p.mediaUrl,
+      mediaType: p.mediaType,
       pollOptions: p.isPoll ? [] : undefined,
     }));
 
@@ -86,7 +88,8 @@ export async function createPost(req: Request, res: Response) {
         .status(400)
         .json({ error: "Sync user first: POST /api/users/sync" });
 
-    const { title, body, communityId, isPoll, pollOptions } = req.body;
+    const { title, body, communityId, isPoll, pollOptions, mediaUrl, mediaType } =
+      req.body;
     if (!title?.trim())
       return res.status(400).json({ error: "Title required" });
     if (!communityId)
@@ -99,6 +102,8 @@ export async function createPost(req: Request, res: Response) {
         communityId,
         authorId: user.id,
         isPoll: !!isPoll,
+        mediaUrl: mediaUrl ? String(mediaUrl).trim() : null,
+        mediaType: mediaType ? String(mediaType).trim() : null,
       },
       include: { author: true, community: true },
     });

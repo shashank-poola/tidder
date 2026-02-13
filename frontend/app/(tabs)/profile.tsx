@@ -1,63 +1,65 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useApi } from "@/lib/api";
 import { styles } from "@/styles/profile.style";
 
 type ProfileTab = "posts" | "about";
 
-type UserPost = {
+type User = {
   id: string;
-  community: string;
-  title: string;
-  meta: string;
-  stats: string;
+  username: string;
+  imageUrl?: string | null;
 };
-
-const POSTS: UserPost[] = [
-  {
-    id: "1",
-    community: "r/DeveloperJobs",
-    title: "How I built a Reddit‑style app in Expo in a weekend",
-    meta: "Posted 1d ago",
-    stats: "1.4k upvotes • 210 comments",
-  },
-  {
-    id: "2",
-    community: "r/TwenteisIndia",
-    title: "Managing side projects while working full‑time",
-    meta: "Posted 3d ago",
-    stats: "620 upvotes • 87 comments",
-  },
-];
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
+  const [user, setUser] = useState<User | null>(null);
+  const api = useApi();
+
+  useEffect(() => {
+    let isMounted = true;
+    api
+      .syncUser()
+      .then((u) => {
+        if (isMounted) setUser(u);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [api]);
+
+  const displayName = user?.username ?? "New redditor";
+  const handleLetter = displayName[0]?.toUpperCase() ?? "U";
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <View style={styles.header}>
         <View style={styles.topRow}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarLetter}>Y</Text>
+            <Text style={styles.avatarLetter}>{handleLetter}</Text>
           </View>
           <View>
-            <Text style={styles.nameText}>Your Name</Text>
-            <Text style={styles.usernameText}>u/you</Text>
+            <Text style={styles.nameText}>{displayName}</Text>
+            <Text style={styles.usernameText}>u/{displayName}</Text>
           </View>
         </View>
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>12.3k</Text>
+            <Text style={styles.statNumber}>0</Text>
             <Text style={styles.statLabel}>karma</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>2y</Text>
+            <Text style={styles.statNumber}>0d</Text>
             <Text style={styles.statLabel}>redditor</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>48</Text>
+            <Text style={styles.statNumber}>0</Text>
             <Text style={styles.statLabel}>posts</Text>
           </View>
         </View>
@@ -105,18 +107,13 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.list}
           >
-            {POSTS.map((post) => (
-              <View key={post.id} style={styles.postCard}>
-                <View style={styles.postMetaRow}>
-                  <Text style={styles.postCommunity}>{post.community}</Text>
-                  <Text style={styles.postMetaText}> • {post.meta}</Text>
-                </View>
-                <Text style={styles.postTitle}>{post.title}</Text>
-                <View style={styles.postFooterRow}>
-                  <Text style={styles.postFooterText}>{post.stats}</Text>
-                </View>
-              </View>
-            ))}
+            <View style={styles.postCard}>
+              <Text style={styles.postTitle}>You haven’t posted yet</Text>
+              <Text style={styles.postFooterText}>
+                Create your first post from the Create tab. Once you start
+                posting, your content will appear here.
+              </Text>
+            </View>
           </ScrollView>
         ) : (
           <ScrollView
@@ -124,7 +121,7 @@ export default function ProfileScreen() {
             contentContainerStyle={styles.list}
           >
             <View style={styles.postCard}>
-              <Text style={styles.postTitle}>About u/you</Text>
+              <Text style={styles.postTitle}>About u/{displayName}</Text>
               <Text style={styles.postFooterText}>
                 This is your space to tell communities who you are. Add a short
                 bio, your interests, or what you're building.

@@ -1,7 +1,14 @@
-import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import Loader from "@/components/Loader";
+import { useApi } from "@/lib/api";
 import { styles } from "@/styles/answer.style";
 
 type PollOption = {
@@ -20,38 +27,67 @@ type Poll = {
   options: PollOption[];
 };
 
-const POLLS: Poll[] = [
-  {
-    id: "1",
-    community: "r/DeveloperJobs",
-    question: "What stack are you using for your next side project?",
-    time: "8h",
-    totalVotes: "3.2k",
-    comments: "210",
-    options: [
-      { id: "1", label: "React + Node", percent: 46 },
-      { id: "2", label: "React Native + Expo", percent: 32 },
-      { id: "3", label: "Next.js full‑stack", percent: 18 },
-      { id: "4", label: "Something else", percent: 4 },
-    ],
-  },
-  {
-    id: "2",
-    community: "r/TwenteisIndia",
-    question: "Best time to code after a full‑time job?",
-    time: "1d",
-    totalVotes: "1.1k",
-    comments: "98",
-    options: [
-      { id: "1", label: "Early morning", percent: 21 },
-      { id: "2", label: "Evening", percent: 43 },
-      { id: "3", label: "Late night", percent: 31 },
-      { id: "4", label: "Weekends only", percent: 5 },
-    ],
-  },
-];
+function formatTime(createdAt: string) {
+  const d = new Date(createdAt);
+  const h = Math.floor((Date.now() - d.getTime()) / 3600000);
+  if (h < 1) return "now";
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 export default function PollScreen() {
+  const api = useApi();
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await api.getPolls();
+      const mapped: Poll[] = data.map((p: any) => {
+        const totalVotes = p.pollOptions.reduce(
+          (sum: number, o: any) => sum + (o.voteCount || 0),
+          0
+        );
+        return {
+          id: p.id,
+          community: `r/${p.community.name}`,
+          question: p.title,
+          time: formatTime(p.createdAt),
+          totalVotes: String(totalVotes),
+          comments: String(p._count.comments ?? 0),
+          options: p.pollOptions.map((o: any) => ({
+            id: o.id,
+            label: o.label,
+            percent: totalVotes
+              ? Math.round(((o.voteCount || 0) / totalVotes) * 100)
+              : 0,
+          })),
+        };
+      });
+      setPolls(mapped);
+    } catch (e) {
+      console.error(e);
+      setError(
+        e instanceof Error ? e.message : "Failed to load polls"
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    load();
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <View style={styles.header}>
@@ -61,47 +97,94 @@ export default function PollScreen() {
         </Text>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-      >
-        {POLLS.map((poll) => (
-          <View key={poll.id} style={styles.pollCard}>
-            <View style={styles.pollHeaderRow}>
-              <Text style={styles.communityName}>{poll.community}</Text>
-              <Text style={styles.pollMetaText}>• {poll.time} ago</Text>
-            </View>
+      {loading ? (
+        <Loader message="Loading polls..." />
+      ) : polls.length === 0 ? (
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "600",
+              marginBottom: 6,
+            }}
+          >
+            No polls yet
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              textAlign: "center",
+              color: "#6B7280",
+            }}
+          >
+            When communities start creating polls, they will appear here.
+          </Text>
+          {error ? (
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#EF4444",
+                marginTop: 8,
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </Text>
+          ) : null}
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {polls.map((poll) => (
+            <View key={poll.id} style={styles.pollCard}>
+              <View style={styles.pollHeaderRow}>
+                <Text style={styles.communityName}>{poll.community}</Text>
+                <Text style={styles.pollMetaText}>• {poll.time} ago</Text>
+              </View>
 
-            <Text style={styles.pollQuestion}>{poll.question}</Text>
+              <Text style={styles.pollQuestion}>{poll.question}</Text>
 
-            {poll.options.map((option) => (
-              <View key={option.id} style={styles.optionRow}>
-                <View style={styles.optionBarBackground}>
-                  <View
-                    style={[
-                      styles.optionFill,
-                      { width: `${option.percent}%` },
-                    ]}
-                  />
-                  <View style={styles.optionContentRow}>
-                    <Text style={styles.optionText}>{option.label}</Text>
-                    <Text style={styles.optionPercent}>
-                      {option.percent}%
-                    </Text>
+              {poll.options.map((option) => (
+                <View key={option.id} style={styles.optionRow}>
+                  <View style={styles.optionBarBackground}>
+                    <View
+                      style={[
+                        styles.optionFill,
+                        { width: `${option.percent}%` },
+                      ]}
+                    />
+                    <View style={styles.optionContentRow}>
+                      <Text style={styles.optionText}>{option.label}</Text>
+                      <Text style={styles.optionPercent}>
+                        {option.percent}%
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              ))}
 
-            <View style={styles.pollFooterRow}>
-              <Text style={styles.pollFooterText}>
-                {poll.totalVotes} votes • {poll.comments} comments
-              </Text>
-              <Text style={styles.pollFooterText}>Poll closes in 2 days</Text>
+              <View style={styles.pollFooterRow}>
+                <Text style={styles.pollFooterText}>
+                  {poll.totalVotes} votes • {poll.comments} comments
+                </Text>
+                <Text style={styles.pollFooterText}>Poll closes in 2 days</Text>
+              </View>
             </View>
-          </View>
-        ))}
-      </ScrollView>
+          ))}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

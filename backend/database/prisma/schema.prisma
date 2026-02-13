@@ -43,6 +43,10 @@ model Post {
   isPoll       Boolean  @default(false)
   createdAt    DateTime @default(now())
 
+  // Optional media attached to the post
+  mediaUrl   String?
+  mediaType  String? // "image" | "video"
+
   community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
   author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   votes       Vote[]

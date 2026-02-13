@@ -59,6 +59,20 @@ export const styles = StyleSheet.create({
     elevation: 6,
   },
 
+  loginTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 4,
+  },
+
+  loginSubtitle: {
+    fontSize: 13,
+    color: COLORS.grey,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -84,6 +98,13 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: COLORS.text,
+  },
+
+  errorText: {
+    marginTop: 12,
+    fontSize: 12,
+    color: "#EF4444",
+    textAlign: "center",
   },
 
   termsText: {

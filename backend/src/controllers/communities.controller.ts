@@ -1,11 +1,42 @@
 import type { Request, Response } from "express";
 import { prisma } from "../../database/src/index";
 
+const DEFAULT_COMMUNITIES = [
+  {
+    name: "General",
+    slug: "general",
+    description: "General discussion for everyone on Tidder.",
+  },
+  {
+    name: "Technology",
+    slug: "technology",
+    description: "News, questions and discussions about technology.",
+  },
+  {
+    name: "Announcements",
+    slug: "announcements",
+    description: "Official updates and announcements.",
+  },
+];
+
 export async function listCommunities(_req: Request, res: Response) {
   try {
-    const communities = await prisma.community.findMany({
+    let communities = await prisma.community.findMany({
       orderBy: { name: "asc" },
     });
+
+    // If this is a fresh database with no communities,
+    // seed a small set of defaults so new users can post immediately.
+    if (communities.length === 0) {
+      await prisma.community.createMany({
+        data: DEFAULT_COMMUNITIES,
+        skipDuplicates: true,
+      });
+      communities = await prisma.community.findMany({
+        orderBy: { name: "asc" },
+      });
+    }
+
     res.json(communities);
   } catch (e) {
     console.error(e);

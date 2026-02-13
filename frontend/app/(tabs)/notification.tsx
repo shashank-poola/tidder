@@ -1,64 +1,20 @@
 import React, { useState } from "react";
-import {
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { styles } from "@/styles/notification.style";
-
-type NotificationType = "all" | "mentions";
-
-type Notification = {
-  id: string;
-  type: NotificationType;
-  primary: string;
-  boldPart?: string;
-  secondary: string;
-  time: string;
-};
-
-const NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    type: "all",
-    primary: "u/hiring_now",
-    boldPart: " replied to your comment",
-    secondary: "“We’re reviewing your portfolio, looks great so far!”",
-    time: "3m",
-  },
-  {
-    id: "2",
-    type: "mentions",
-    primary: "u/dev_friend",
-    boldPart: " mentioned you in r/DeveloperJobs",
-    secondary: "“Check out what u/you built in Tidder, super clean UI.”",
-    time: "25m",
-  },
-  {
-    id: "3",
-    type: "all",
-    primary: "Your post in r/TwenteisIndia",
-    boldPart: " is getting traction",
-    secondary: "120 new upvotes in the last hour.",
-    time: "1h",
-  },
-  {
-    id: "4",
-    type: "all",
-    primary: "New follower",
-    boldPart: " u/new_redditor",
-    secondary: "started following you.",
-    time: "4h",
-  },
-];
+import NotificationRow, {
+  NotificationItem,
+  NotificationType,
+} from "@/components/notification";
 
 export default function NotificationScreen() {
   const [activeTab, setActiveTab] = useState<NotificationType>("all");
 
-  const filtered = NOTIFICATIONS.filter(
+  // Backend notifications are not implemented yet.
+  // Start with an empty list so new users don't see fake data.
+  const notifications: NotificationItem[] = [];
+  const filtered = notifications.filter(
     (item) => activeTab === "all" || item.type === activeTab
   );
 
@@ -94,30 +50,45 @@ export default function NotificationScreen() {
         </View>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-      >
-        {filtered.map((item) => (
-          <View key={item.id} style={styles.item}>
-            <View style={styles.avatar}>
-              <Text style={{ fontWeight: "700" }}>
-                {item.primary[0]?.toUpperCase() ?? "T"}
-              </Text>
-            </View>
-            <View style={styles.content}>
-              <Text style={styles.primaryText}>
-                <Text style={styles.bold}>{item.primary}</Text>
-                {item.boldPart && <Text style={styles.primaryText}>{item.boldPart}</Text>}
-              </Text>
-              <View style={styles.secondaryRow}>
-                <Text style={styles.secondaryText}>{item.secondary}</Text>
-              </View>
-            </View>
-            <Text style={styles.timeText}>{item.time}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      {filtered.length === 0 ? (
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "600",
+              marginBottom: 6,
+            }}
+          >
+            You’re all caught up
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              textAlign: "center",
+              color: "#6B7280",
+            }}
+          >
+            You don’t have any notifications yet. Activity from your posts and
+            comments will show up here.
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+        >
+          {filtered.map((item) => (
+            <NotificationRow key={item.id} item={item} />
+          ))}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

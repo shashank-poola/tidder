@@ -42,9 +42,9 @@ export const styles = StyleSheet.create({
   },
 
   appName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: "800",
+    color: COLORS.primary,
   },
 
   headerRight: {

@@ -1,8 +1,9 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { useCallback } from "react";
 
-const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000/api";
+import { EXPO_API_URL } from "@/constants/api";
+
+const API_URL = EXPO_API_URL;
 
 export function useApi() {
   const { getToken } = useAuth();
@@ -16,7 +17,15 @@ export function useApi() {
       };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+      let res: Response;
+      try {
+        res = await fetch(`${API_URL}${path}`, { ...options, headers });
+      } catch (err) {
+        console.error("Network error while calling API:", err);
+        throw new Error(
+          "Network request failed. Check your internet connection or API URL."
+        );
+      }
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(err.error || res.statusText);
@@ -41,7 +50,10 @@ export function useApi() {
       communityId: string;
       isPoll?: boolean;
       pollOptions?: string[];
-    }) => fetchWithAuth("/posts", { method: "POST", body: JSON.stringify(data) }),
+      mediaUrl?: string;
+      mediaType?: "image" | "video";
+    }) =>
+      fetchWithAuth("/posts", { method: "POST", body: JSON.stringify(data) }),
     votePost: (postId: string, value: 1 | -1) =>
       fetchWithAuth(`/posts/${postId}/vote`, {
         method: "POST",
