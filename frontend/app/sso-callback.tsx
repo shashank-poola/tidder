@@ -1,11 +1,6 @@
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-// This screen exists so that Expo Router has a matching route for the
-// "sso-callback" deep link used during the Clerk OAuth / SSO flow.
-// The actual session handling is done inside Clerk's hooks; here we just
-// show a lightweight loading state while the redirect completes.
-
 export default function SsoCallbackScreen() {
   return (
     <View style={styles.container}>

@@ -8,7 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Users synced from Clerk
 model User {
   id        String   @id @default(cuid())
   clerkId   String   @unique
@@ -22,7 +21,6 @@ model User {
   pollVotes PollVote[]
 }
 
-// Subreddit-style communities
 model Community {
   id          String   @id @default(cuid())
   name        String   // e.g. "DeveloperJobs"
@@ -33,7 +31,6 @@ model Community {
   posts Post[]
 }
 
-// Posts or polls
 model Post {
   id           String   @id @default(cuid())
   title        String
@@ -43,7 +40,6 @@ model Post {
   isPoll       Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  // Optional media attached to the post
   mediaUrl   String?
   mediaType  String? // "image" | "video"
 
@@ -58,7 +54,6 @@ model Post {
   @@index([createdAt(sort: Desc)])
 }
 
-// Poll options (only when post.isPoll)
 model PollOption {
   id        String   @id @default(cuid())
   postId    String
@@ -71,7 +66,6 @@ model PollOption {
   @@index([postId])
 }
 
-// Post upvote/downvote
 model Vote {
   id        String   @id @default(cuid())
   postId    String
@@ -85,7 +79,6 @@ model Vote {
   @@index([postId])
 }
 
-// Poll option vote
 model PollVote {
   id        String   @id @default(cuid())
   optionId  String
@@ -98,7 +91,6 @@ model PollVote {
   @@index([optionId])
 }
 
-// Comments on posts
 model Comment {
   id        String   @id @default(cuid())
   postId    String
