@@ -33,7 +33,6 @@ export default function RootLayout() {
           <Stack.Screen
             name="sso-callback"
             options={{
-              // Prevent this technical route from showing up in navigation or deep links
               href: null,
             }}
           />

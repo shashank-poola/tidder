@@ -5,7 +5,7 @@ export default function Index() {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isLoaded) {
-    return null; // or a loading spinner
+    return null;
   }
 
   if (isSignedIn) {
